@@ -1,0 +1,82 @@
+pipeline {
+    agent any       // Define agent details here
+    
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws_demo_credentials')
+        AWS_SECRET_ACCESS_KEY = credentials('aws_demo_credentials')
+        AWS_DEFAULT_REGION = 'us-east-2'
+    }
+    stages{
+        stage ('Checkout SCM'){
+            steps{
+                script{
+                    checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Rabi8429/terraform-CICD-EKS.git']])
+                }
+                
+                
+            }
+        }
+        stage ('Initialize Terraform'){
+            steps{
+                script{
+                    dir('EKS-cluster'){
+                        sh 'terraform init'
+                    }
+                }
+                
+                
+            }
+        }
+        stage ('Formating Terraform configuration'){
+            steps{
+                script{
+                    dir('EKS-cluster'){
+                        sh 'terraform fmt'
+                    }
+                }
+                
+                
+            }
+        }
+        stage ('Terraform validation'){
+            steps{
+                script{
+                    dir('EKS-cluster'){
+                        sh 'terraform validate'
+                    }
+                }
+                
+                
+            }
+        }
+        stage ('Tearrform Planing'){
+            steps{
+                script{
+                    dir('EKS-cluster'){
+                        sh 'terraform plan'
+                    }
+                    input(message: "Are you sure to proceed?", ok: "Proceed")
+                }
+                
+                
+            }
+        }
+        stage ('Creating an eks cluster'){
+            steps{
+                script{
+                    dir('EKS-cluster'){
+                        //  It's for without action paramiter
+                        // sh 'terraform apply --auto-approve'  
+                       //   go to manager jenkins >general>This project is parameterized> Name:action and Choices: apply/destroy
+                        sh 'terraform $action --auto-approve'
+                      
+                    }
+                }
+                
+                
+            }
+        }
+    }
+ }
+
+    
